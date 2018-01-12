@@ -1,5 +1,9 @@
 var express = require('express');
 var router = express.Router();
+var passport = require('passport');
+
+// get gravatar icon from email
+var gravatar = require('gravatar');
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -16,6 +20,14 @@ router.get('/login', function(req, res, next){
   });
 });
 
+/* POST login */
+router.post('/login', passport.authenticate('local-login', {
+  // Success = go to profile page, else go to login page
+  successRedirect: '/profile',
+  failureRedirect: '/login',
+  failureFlash: true
+}));
+
 /* GET signup. */
 router.get('/signup', function(req, res){
   res.render('signup', {
@@ -24,13 +36,34 @@ router.get('/signup', function(req, res){
   });
 });
 
+/* POST Signup */
+router.post('/signup', passport.authenticate('local-signup', {
+  // Success = to profile page, else, signup page
+  successRedirect: '/profile',
+  failureRedirect: '/signup',
+  failureFlash: true
+}));
+
 /* GET Profile page. */
-router.get('/profile', function(req, res, next){
+router.get('/profile', isLoggedIn, function(req, res, next){
   res.render('profile', {
     title: 'Profile Page',
     user: req.user,
     avatar: gravatar.url(req.user.email, {s: '100', r: 'x', d:'retro'}, true)
   });
+});
+
+/* check if user is logged in */
+function isLoggedIn(req, res, next){
+  if(req.isAuthenticated())
+    return next();
+    res.redirect('/login');
+}
+
+/* GET Logout page */
+router.get('/logout', function(req, res){
+  req.logout();
+  res.redirect('/');
 });
 
 module.exports = router;
